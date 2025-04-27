@@ -1,0 +1,10 @@
+# Django
+SECRET_KEY=minha_chave_super_secreta
+DEBUG=True
+
+# Postgres
+DB_NAME=twitterdb
+DB_USER=twitter_user
+DB_PASSWORD=senha123
+DB_HOST=db
+DB_PORT=5432

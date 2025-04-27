@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB:      twitterdb
+      POSTGRES_USER:    twitter_user
+      POSTGRES_PASSWORD: senha123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    env_file: .env
+    volumes:
+      - ./twitter:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
