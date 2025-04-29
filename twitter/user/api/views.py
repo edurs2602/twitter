@@ -5,9 +5,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from ..models import User
 from .serializers import RegisterSerializer, UserSerializer
 
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset      = User.objects.all()
-    lookup_field  = 'uuid'
 
     def get_permissions(self):
         if self.action == 'create':

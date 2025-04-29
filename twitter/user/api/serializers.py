@@ -15,13 +15,13 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'uuid',
+            'id',
             'email',
             'username',
             'created_at',
         )
         read_only_fields = (
-            'uuid',
+            'id',
             'created_at',
         )
 
