@@ -10,7 +10,6 @@ from .serializers import FollowSerializer
 
 User = get_user_model()
 
-
 class FollowViewSet(viewsets.ModelViewSet):
     queryset = Follow.objects.all()
     serializer_class = FollowSerializer
@@ -19,7 +18,7 @@ class FollowViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def follow(self, request, pk=None):
         try:
-            user_to_follow = User.objects.get(id=uuid.UUID(pk))
+            user_to_follow = User.objects.get(id=pk)
         except User.DoesNotExist:
             return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -35,7 +34,7 @@ class FollowViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def unfollow(self, request, pk=None):
         try:
-            user_to_unfollow = User.objects.get(id=uuid.UUID(pk))
+            user_to_unfollow = User.objects.get(id=pk)
         except User.DoesNotExist:
             return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -52,7 +51,7 @@ class FollowViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def followers_count(self, request, pk=None):
         try:
-            user = User.objects.get(id=uuid.UUID(pk))
+            user = User.objects.get(id=pk)
         except User.DoesNotExist:
             return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -62,7 +61,7 @@ class FollowViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def following_count(self, request, pk=None):
         try:
-            user = User.objects.get(id=uuid.UUID(pk))
+            user = User.objects.get(id=pk)
         except User.DoesNotExist:
             return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
 
