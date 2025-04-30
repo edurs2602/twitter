@@ -3,10 +3,12 @@ from django.db import models
 
 
 class CoreModel(models.Model):
-    uuid = models.UUIDField(
+    id = models.CharField(
         default=uuid.uuid4,
         editable=False,
-        unique=True
+        unique=True,
+        primary_key=True,
+        max_length=36
     )
 
     created_at = models.DateTimeField(
@@ -15,3 +17,6 @@ class CoreModel(models.Model):
 
     class Meta:
         abstract = True
+
+    def __str__(self):
+        return str(self.id)

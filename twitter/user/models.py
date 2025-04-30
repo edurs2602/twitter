@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager
@@ -8,7 +9,7 @@ from core.models import CoreModel
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
         if not email:
-            raise ValueError('O campo email é obrigatório')
+            raise ValueError('The email is required')
         email = self.normalize_email(email)
         user = self.model(email=email, username=username, **extra_fields)
         user.set_password(password)
