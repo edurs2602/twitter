@@ -7,7 +7,7 @@ from .serializers import RegisterSerializer, UserSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset      = User.objects.all()
+    queryset = User.objects.all()
 
     def get_permissions(self):
         if self.action == 'create':
