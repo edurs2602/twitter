@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'core',
     'user',
     'follow',
+    'post',
 
     #3rd Party Apps
     'rest_framework',
@@ -62,6 +63,12 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '5/minute',
+    }
 }
 
 SIMPLE_JWT = {
