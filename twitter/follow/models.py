@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from user.models import User
 from core.models import CoreModel
@@ -7,13 +8,15 @@ class Follow(CoreModel):
     user = models.ForeignKey(
         User,
         related_name='following',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        to_field='id'
     )
 
     following_user = models.ForeignKey(
         User,
         related_name='followers',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        to_field='id'
     )
 
     class Meta:
