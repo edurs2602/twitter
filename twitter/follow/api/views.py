@@ -10,6 +10,7 @@ from .serializers import FollowSerializer
 
 User = get_user_model()
 
+
 class FollowViewSet(viewsets.ModelViewSet):
     queryset = Follow.objects.all()
     serializer_class = FollowSerializer
@@ -47,3 +48,23 @@ class FollowViewSet(viewsets.ModelViewSet):
 
         follow.delete()
         return Response({'message': f'You have unfollowed {user_to_unfollow.username}.'}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'])
+    def followers_count(self, request, pk=None):
+        try:
+            user = User.objects.get(id=uuid.UUID(pk))
+        except User.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        followers_count = Follow.objects.filter(following_user=user).count()
+        return Response({'followers_count': followers_count}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'])
+    def following_count(self, request, pk=None):
+        try:
+            user = User.objects.get(id=uuid.UUID(pk))
+        except User.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        following_count = Follow.objects.filter(user=user).count()
+        return Response({'following_count': following_count}, status=status.HTTP_200_OK)
