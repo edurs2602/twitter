@@ -84,8 +84,17 @@ jobs:
       env:
         PYTHONPATH: "${{ github.workspace }}"
       run: |
+        coverage run -m unittest discover -v      # descobre testes em **/test*.py
+        coverage xml                               # gera cobertura em XML (opcional)
+
+    - name: Run tests with coverage (unittest)
+      env:
+        PYTHONPATH: "${{ github.workspace }}"
+      run: |
+        # procura recursivamente por "*tests.py" a partir da raiz do repositório
         coverage run -m unittest discover \
-                     -s . \                 
-                     -p "*tests.py" \       
+                     -s . \                 # diretório inicial
+                     -p "*tests.py" \       # padrão de arquivo
                      -v
+        # gera o XML apenas se algum arquivo .coverage foi criado
         if [ -f .coverage ]; then coverage xml; fi
