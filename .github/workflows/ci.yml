@@ -85,5 +85,5 @@ jobs:
         DJANGO_SETTINGS_MODULE: twitter.settings        # seu módulo de settings
         PYTHONPATH: "${{ github.workspace }}"
       run: |
-        coverage run twitter/manage.py test tests --pattern="*_tests.py" -v 2
+        coverage run manage.py test tests --pattern="*_tests.py" -v 2
         coverage xml -i
