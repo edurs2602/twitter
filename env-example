@@ -1,6 +1,6 @@
 # Django
 SECRET_KEY=minha_chave_super_secreta
-DEBUG=True
+DEBUG=False
 
 # Postgres
 DB_NAME=twitterdb
