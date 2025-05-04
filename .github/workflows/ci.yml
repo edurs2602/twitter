@@ -1,3 +1,4 @@
+# .github/workflows/ci-cd.yml
 name: CI/CD Pipeline
 
 on:
@@ -9,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
 
     env:
       SECRET_KEY:  ${{ secrets.SECRET_KEY }}
@@ -72,9 +75,11 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+
     if: >
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
 
