@@ -59,6 +59,7 @@ jobs:
 
       - name: Run Django tests with coverage
         run: |
+          ls
           coverage run --source='.' manage.py test
 
       - name: Generate coverage report
