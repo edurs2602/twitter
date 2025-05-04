@@ -1,3 +1,4 @@
+# .github/workflows/ci-cd.yml
 name: CI/CD Pipeline
 
 on:
@@ -128,21 +129,26 @@ jobs:
 
       - name: SSH & deploy to Dev VM
         run: |
-          sshpass -p "${{ secrets.VM_PASSWORD }}" \
-            ssh -o StrictHostKeyChecking=no ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
-              export DJANGO_SECRET_KEY="${{ secrets.SECRET_KEY }}"
-              cd /home/${{ secrets.VM_USER }}/twitter
-              git reset --hard
-              git clean -df
-              git checkout develop
-              git pull origin develop
-              docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-              docker pull ghcr.io/${{ github.repository_owner }}/twitter:develop-latest
-              docker-compose down
-              docker-compose up -d
-            EOF
+          sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
+          set -e
 
-  deploy_homolog:
+          export DJANGO_SECRET_KEY="${{ secrets.SECRET_KEY }}"
+
+          cd /home/${{ secrets.VM_USER }}/twitter || exit 1
+
+          git fetch --all --prune
+          git checkout develop
+          git reset --hard origin/develop
+
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          docker pull ghcr.io/${{ github.repository_owner }}/twitter:develop-latest
+
+          docker-compose down
+          docker-compose up -d
+          EOF
+
+  deploy:
     needs: publish_image_main
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
@@ -154,16 +160,21 @@ jobs:
 
       - name: SSH & deploy to Prod VM
         run: |
-          sshpass -p "${{ secrets.VM_PASSWORD }}" \
-            ssh -o StrictHostKeyChecking=no ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
-              export DJANGO_SECRET_KEY="${{ secrets.SECRET_KEY }}"
-              cd /home/${{ secrets.VM_USER }}/twitter
-              git reset --hard
-              git clean -df
-              git checkout main
-              git pull origin main
-              docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-              docker pull ghcr.io/${{ github.repository_owner }}/twitter:latest
-              docker-compose down
-              docker-compose up -d
-            EOF
+          sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
+          set -e
+
+          export DJANGO_SECRET_KEY="${{ secrets.SECRET_KEY }}"
+
+          cd /home/${{ secrets.VM_USER }}/twitter || exit 1
+
+          git fetch --all --prune
+          git checkout main
+          git reset --hard origin/main
+
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          docker pull ghcr.io/${{ github.repository_owner }}/twitter:latest
+
+          docker-compose down
+          docker-compose up -d
+          EOF
