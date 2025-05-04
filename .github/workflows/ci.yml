@@ -6,20 +6,29 @@ on:
   pull_request:
     branches: [ '**' ]
 
-
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    env:
+      SECRET_KEY:  ${{ secrets.SECRET_KEY }}
+      DB_NAME:     test_db
+      DB_USER:     test_db
+      DB_PASSWORD: password
+      DB_HOST:     localhost
+      DB_PORT:     '5432'
+
     strategy:
       matrix:
         python-version: ["3.12"]
+
     services:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: test_db
+          POSTGRES_USER:     test_db
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: test_db
+          POSTGRES_DB:       test_db
         ports:
           - 5432:5432
         options: >-
@@ -45,18 +54,9 @@ jobs:
 
       - name: Wait for Postgres to be ready
         run: |
-          until pg_isready -h localhost -p 5432 -U test_db; do
+          until pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER; do
             sleep 1
           done
-
-      - name: Export DB env vars
-        run: |
-          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}"  >> $GITHUB_ENV
-          echo "POSTGRES_NAME=test_db"       >> $GITHUB_ENV
-          echo "POSTGRES_USER=test_db"       >> $GITHUB_ENV
-          echo "POSTGRES_PASSWORD=password"  >> $GITHUB_ENV
-          echo "POSTGRES_HOST=localhost"     >> $GITHUB_ENV
-          echo "POSTGRES_PORT=5432"          >> $GITHUB_ENV
 
       - name: Run Django tests with coverage
         working-directory: ./twitter
@@ -64,6 +64,7 @@ jobs:
           coverage run --source='.' manage.py test
 
       - name: Generate coverage report
+        working-directory: ./twitter
         run: |
           coverage report -m
           coverage xml -i
@@ -71,7 +72,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
+    if: >
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
 
@@ -96,6 +99,5 @@ jobs:
             git pull origin ${{ github.ref_name }}
             source venv/bin/activate
             pip install -r requirements.txt
-            # reinicie seu serviço (ex: systemd, gunicorn, docker, etc.)
             sudo systemctl restart myapp.service
           EOF
