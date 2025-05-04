@@ -51,6 +51,7 @@ jobs:
 
       - name: Export DB env vars
         run: |
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}"  >> $GITHUB_ENV
           echo "POSTGRES_NAME=test_db"       >> $GITHUB_ENV
           echo "POSTGRES_USER=test_db"       >> $GITHUB_ENV
           echo "POSTGRES_PASSWORD=password"  >> $GITHUB_ENV
@@ -59,13 +60,6 @@ jobs:
 
       - name: Run Django tests with coverage
         working-directory: ./twitter
-        env:
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          DB_NAME: test_db
-          DB_USER: test_db
-          DB_PASSWORD: password
-          DB_HOST: localhost
-          DB_PORT: 5432
         run: |
           coverage run --source='.' manage.py test
 
