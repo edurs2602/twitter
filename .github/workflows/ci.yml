@@ -60,6 +60,7 @@ jobs:
       - name: Run Django tests with coverage
         working-directory: ./twitter
         run: |
+          export SECRET_KEY = ${{ secrets.SECRET_KEY }}
           coverage run --source='.' manage.py test
 
       - name: Generate coverage report
