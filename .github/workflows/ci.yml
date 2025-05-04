@@ -58,8 +58,8 @@ jobs:
           echo "POSTGRES_PORT=5432"          >> $GITHUB_ENV
 
       - name: Run Django tests with coverage
+        working-directory: ./twitter
         run: |
-          ls
           coverage run --source='.' manage.py test
 
       - name: Generate coverage report
