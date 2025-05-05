@@ -28,7 +28,7 @@ This project is a REST API built with Django and Django REST Framework, featurin
 3. To stop and remove containers:
    ```bash
    docker-compose down
-   ``
+   ```
 
 ---
 
