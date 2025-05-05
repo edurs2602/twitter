@@ -40,4 +40,5 @@ urlpatterns = [
     path('api/', include('user.urls')),
     path('api/', include('follow.urls')),
     path('api/', include('post.urls')),
+    path('', include('core.urls'))
 ]
