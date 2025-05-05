@@ -8,7 +8,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  web:
+  web-dev:
     build: .
     env_file: .env
     volumes:
@@ -17,6 +17,17 @@ services:
       - "8000:8000"
     depends_on:
       - db
+
+  web-prod:
+    build: .
+    env_file: .env
+    volumes:
+      - ./twitter:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
 
 volumes:
   postgres_data:

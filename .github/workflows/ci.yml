@@ -64,7 +64,7 @@ jobs:
   publish_image_dev:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/feat/cd-aws'
+    if: github.ref == 'refs/heads/develop'
     steps:
       - uses: actions/checkout@v3
       - name: Set up Docker Buildx
@@ -104,7 +104,7 @@ jobs:
   deploy_dev:
     needs: publish_image_dev
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/feat/cd-aws'
+    if: github.ref == 'refs/heads/develop'
     environment: staging
 
     steps:
@@ -135,7 +135,7 @@ jobs:
           docker pull ghcr.io/${{ github.repository_owner }}/twitter:develop-latest
 
           docker compose down
-          docker compose up -d
+          docker compose up web-dev -d
           EOF
 
   deploy_homolog:
@@ -157,8 +157,7 @@ jobs:
           set -e
 
           sudo apt-get update
-          sudo apt-get install -y docker.io docker-compose-plugin
-
+          
           cd ~
           if [ ! -d twitter ]; then
             git clone https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git twitter
@@ -173,5 +172,5 @@ jobs:
           docker pull ghcr.io/${{ github.repository_owner }}/twitter:latest
 
           docker compose down
-          docker compose up -d
+          docker compose up web-prod -d
           EOF
