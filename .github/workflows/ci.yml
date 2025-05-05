@@ -132,7 +132,7 @@ jobs:
           git checkout develop
           git reset --hard origin/develop
 
-          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GHCR_PAT }}
           docker pull ghcr.io/${{ github.repository_owner }}/twitter:develop-latest
 
           docker compose down
@@ -170,7 +170,7 @@ jobs:
           git checkout main
           git reset --hard origin/main
 
-          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GHCR_PAT }}
           docker pull ghcr.io/${{ github.repository_owner }}/twitter:latest
 
           docker compose down
