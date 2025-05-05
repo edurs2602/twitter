@@ -56,3 +56,11 @@ This project is a REST API built with Django and Django REST Framework, featurin
 ![](docs/diagram.png)
 
 *The diagram above (located at `docs/diagram.png`) shows the main entities and their relationships.*
+
+## Deploy Links
+
+This project uses AWS to host
+
+[Live Server](http://56.124.65.156:8000/home/)
+
+[Live Server Documentation](http://56.124.65.156:8000/api/schema/swagger-ui/)

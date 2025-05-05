@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Home</title>
+  <title>Twitter</title>
   <!-- Inline Tailwind via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -92,7 +92,7 @@
       const password = document.getElementById('password').value;
       const username = document.getElementById('username').value;
       const isLogin = document.getElementById('modal-title').textContent === 'Login';
-      const url = isLogin ? '/api/token/' : '/api/users/';
+      const url = isLogin ? '/api/token/' : '/api/user/';
       const body = isLogin ? { email, password } : { email, password, username };
       try {
         const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -116,7 +116,7 @@
           el.innerHTML = `
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-3">
-                <p class="text-sm text-gray-300 font-medium">${tweet.user.username || tweet.author_username}</p>
+                <p class="text-sm text-gray-300 font-medium">${tweet.user}</p>
                 <p class="text-xs text-gray-500">· ${new Date(tweet.created_at).toLocaleString()}</p>
               </div>
               <div class="space-x-2">
@@ -124,7 +124,7 @@
                 <button data-id="${tweet.id}" class="unlike-btn bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 rounded">Unlike</button>
               </div>
             </div>
-            <p class="text-base">${tweet.content}</p>
+            <p class="text-base">${tweet.text}</p>
             ${tweet.image || tweet.image_url ? `<img src="${tweet.image || tweet.image_url}" alt="Tweet image" class="w-full rounded-md" />` : ''}
           `;
           container.appendChild(el);
