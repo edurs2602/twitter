@@ -1,0 +1,176 @@
+# .github/workflows/ci-cd.yml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      SECRET_KEY:   ${{ secrets.SECRET_KEY }}
+      DB_NAME:      test_db
+      DB_USER:      test_db
+      DB_PASSWORD:  password
+      DB_HOST:      localhost
+      DB_PORT:      '5432'
+
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER:     test_db
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB:       test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt coverage
+      - name: Wait for Postgres to be ready
+        run: |
+          until pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER; do sleep 1; done
+      - name: Run Django tests with coverage
+        working-directory: ./twitter
+        run: |
+          coverage run --source='.' manage.py test
+      - name: Generate coverage report
+        working-directory: ./twitter
+        run: |
+          coverage report -m
+          coverage xml -i
+
+  publish_image_dev:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+      - name: Build & push dev image
+        run: |
+          IMAGE="ghcr.io/${{ github.repository_owner }}/twitter:develop-latest"
+          docker build -t $IMAGE .
+          docker push $IMAGE
+
+  publish_image_main:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+      - name: Build & push prod image
+        run: |
+          IMAGE="ghcr.io/${{ github.repository_owner }}/twitter:latest"
+          docker build -t $IMAGE .
+          docker push $IMAGE
+
+  deploy_dev:
+    needs: publish_image_dev
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+
+    steps:
+      - name: Install SSH & sshpass
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-client sshpass
+
+      - name: SSH & deploy to Dev VM
+        run: |
+          sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
+          set -e
+
+          sudo apt-get update
+         
+          cd ~
+          if [ ! -d twitter ]; then
+            git clone https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git twitter
+          fi
+          cd twitter
+
+          git fetch --all --prune
+          git checkout develop
+          git reset --hard origin/develop
+
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GHCR_PAT }}
+          docker pull ghcr.io/${{ github.repository_owner }}/twitter:develop-latest
+
+          docker compose down
+          docker compose up web-dev -d
+          EOF
+
+  deploy_homolog:
+    needs: publish_image_main
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - name: Install SSH & sshpass
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-client sshpass
+
+      - name: SSH & deploy to Prod VM
+        run: |
+          sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
+          set -e
+
+          sudo apt-get update
+          
+          cd ~
+          if [ ! -d twitter ]; then
+            git clone https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git twitter
+          fi
+          cd twitter
+
+          git fetch --all --prune
+          git checkout main
+          git reset --hard origin/main
+
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GHCR_PAT }}
+          docker pull ghcr.io/${{ github.repository_owner }}/twitter:latest
+
+          docker compose down
+          docker compose up web-prod -d
+          EOF

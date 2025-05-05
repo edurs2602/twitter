@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Home</title>
+  <!-- Inline Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-blue-900 text-white">
+  <!-- Modal backdrop -->
+  <div id="auth-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-blue-800 p-6 rounded-lg w-full max-w-md relative">
+      <h2 id="modal-title" class="text-2xl mb-4">Login</h2>
+      <form id="auth-form" class="space-y-4">
+        <input id="username" type="text" placeholder="Username" class="w-full p-2 bg-blue-700 rounded hidden" />
+        <input id="email" type="email" placeholder="Email" required class="w-full p-2 bg-blue-700 rounded" />
+        <input id="password" type="password" placeholder="Password" required class="w-full p-2 bg-blue-700 rounded" />
+        <button type="submit" class="w-full bg-blue-400 hover:bg-blue-600 p-2 rounded">Submit</button>
+      </form>
+      <p class="mt-4 text-sm">
+        <span id="toggle-auth" class="cursor-pointer text-blue-300 underline">Don't have an account? Sign up</span>
+      </p>
+      <button id="close-modal" class="absolute top-2 right-2 text-gray-400 hover:text-white">✕</button>
+    </div>
+  </div>
+
+  <div class="flex min-h-screen">
+    <!-- Left Sidebar -->
+    <div class="w-1/5 bg-blue-900 p-4 flex flex-col justify-between">
+      <div>
+        <!-- Logo SVG -->
+        <svg viewBox="0 0 24 24" class="h-12 w-12 text-white mb-8" fill="currentColor">
+          <g><path d="M23.643 4.937c-.835..."/></g>
+        </svg>
+        <nav class="mt-5 space-y-2">
+          <a href="#" class="block px-2 py-2 rounded bg-blue-800 text-blue-300">Home</a>
+        </nav>
+      </div>
+      <div>
+        <button id="login-btn" class="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded mb-2">Login / Sign Up</button>
+        <button id="logout-btn" class="w-full bg-red-600 hover:bg-red-700 py-2 rounded hidden">Logout</button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 bg-blue-800 p-4 overflow-auto">
+      <!-- Tweet Form (only visible when logged in) -->
+      <div id="tweet-form-container" class="mb-4 hidden">
+        <form id="tweet-form" class="flex space-x-2" enctype="multipart/form-data">
+          <textarea id="tweet-content" rows="2" class="flex-1 bg-transparent border border-gray-600 rounded-md p-2 text-white" placeholder="What's happening?"></textarea>
+          <input id="tweet-image" type="file" accept="image/*" class="bg-blue-700 p-2 rounded" />
+          <button type="submit" class="bg-blue-400 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full">Tweet</button>
+        </form>
+      </div>
+
+      <!-- Tweets List -->
+      <div id="tweets" class="space-y-6">
+        <!-- tweets will be loaded here via JS -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let token = localStorage.getItem('token');
+
+    function updateUI() {
+      const loggedIn = !!token;
+      document.getElementById('login-btn').classList.toggle('hidden', loggedIn);
+      document.getElementById('logout-btn').classList.toggle('hidden', !loggedIn);
+      document.getElementById('tweet-form-container').classList.toggle('hidden', !loggedIn);
+      if (loggedIn) loadTweets();
+      else document.getElementById('tweets').innerHTML = '<p class="text-gray-400">Please login to view tweets.</p>';
+    }
+
+    document.getElementById('login-btn').onclick = () => {
+      document.getElementById('auth-modal').classList.remove('hidden');
+      document.getElementById('modal-title').textContent = 'Login';
+      document.getElementById('toggle-auth').textContent = "Don't have an account? Sign up";
+      document.getElementById('username').classList.add('hidden');
+    };
+    document.getElementById('close-modal').onclick = () => document.getElementById('auth-modal').classList.add('hidden');
+    document.getElementById('toggle-auth').onclick = () => {
+      const isLogin = document.getElementById('modal-title').textContent === 'Login';
+      document.getElementById('modal-title').textContent = isLogin ? 'Sign Up' : 'Login';
+      document.getElementById('toggle-auth').textContent = isLogin ? 'Already have an account? Login' : "Don't have an account? Sign up";
+      document.getElementById('username').classList.toggle('hidden', !isLogin);
+    };
+
+    document.getElementById('auth-form').onsubmit = async e => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const username = document.getElementById('username').value;
+      const isLogin = document.getElementById('modal-title').textContent === 'Login';
+      const url = isLogin ? '/api/token/' : '/api/users/';
+      const body = isLogin ? { email, password } : { email, password, username };
+      try {
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (res.ok) { token = data.access; localStorage.setItem('token', token); document.getElementById('auth-modal').classList.add('hidden'); updateUI(); }
+        else alert(data.detail || 'Authentication failed');
+      } catch (err) { console.error(err); }
+    };
+    document.getElementById('logout-btn').onclick = () => { token = null; localStorage.removeItem('token'); updateUI(); };
+
+    async function loadTweets() {
+      if (!token) return;
+      try {
+        const res = await fetch('/api/posts/all/', { headers: { 'Authorization': `Bearer ${token}` } });
+        const tweets = await res.json();
+        const container = document.getElementById('tweets');
+        container.innerHTML = '';
+        tweets.forEach(tweet => {
+          const el = document.createElement('div');
+          el.className = 'p-4 bg-blue-700 rounded-md space-y-2';
+          el.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <p class="text-sm text-gray-300 font-medium">${tweet.user.username || tweet.author_username}</p>
+                <p class="text-xs text-gray-500">· ${new Date(tweet.created_at).toLocaleString()}</p>
+              </div>
+              <div class="space-x-2">
+                <button data-id="${tweet.id}" class="like-btn bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded">Like (${tweet.likes_count || 0})</button>
+                <button data-id="${tweet.id}" class="unlike-btn bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 rounded">Unlike</button>
+              </div>
+            </div>
+            <p class="text-base">${tweet.content}</p>
+            ${tweet.image || tweet.image_url ? `<img src="${tweet.image || tweet.image_url}" alt="Tweet image" class="w-full rounded-md" />` : ''}
+          `;
+          container.appendChild(el);
+        });
+        document.querySelectorAll('.like-btn').forEach(btn => {
+          btn.onclick = async () => {
+            const postId = btn.getAttribute('data-id');
+            await fetch(`/api/posts/${postId}/like/`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+            loadTweets();
+          };
+        });
+        document.querySelectorAll('.unlike-btn').forEach(btn => {
+          btn.onclick = async () => {
+            const postId = btn.getAttribute('data-id');
+            await fetch(`/api/posts/${postId}/unlike/`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+            loadTweets();
+          };
+        });
+      } catch (err) { console.error(err); }
+    }
+
+    document.getElementById('tweet-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const content = document.getElementById('tweet-content').value.trim();
+      const imageInput = document.getElementById('tweet-image');
+      if (!content || !token) return;
+      const formData = new FormData();
+      formData.append('content', content);
+      if (imageInput.files.length > 0) formData.append('image', imageInput.files[0]);
+      try {
+        const res = await fetch('/api/posts/', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
+        if (res.ok) { document.getElementById('tweet-content').value = ''; imageInput.value = ''; loadTweets(); }
+        else console.error(await res.text());
+      } catch (err) { console.error(err); }
+    });
+
+    // Initialize UI
+    updateUI();
+  </script>
+</body>
+</html>
