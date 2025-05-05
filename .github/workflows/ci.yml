@@ -64,7 +64,7 @@ jobs:
   publish_image_dev:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/cd-aws'
     steps:
       - uses: actions/checkout@v3
       - name: Set up Docker Buildx
@@ -104,7 +104,7 @@ jobs:
   deploy_dev:
     needs: publish_image_dev
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/cd-aws'
     environment: staging
 
     steps:
@@ -120,8 +120,21 @@ jobs:
           set -e
 
           sudo apt-get update
-          sudo apt-get install -y docker.io docker-compose-plugin
+          sudo apt-get install -y ca-certificates curl gnupg lsb-release
+          sudo install -m 0755 -d /etc/apt/keyrings
 
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+            sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+          echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+          https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
+          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+          sudo apt-get update
+          sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          
           cd ~
           if [ ! -d twitter ]; then
             git clone https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git twitter
