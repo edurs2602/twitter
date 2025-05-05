@@ -64,7 +64,7 @@ jobs:
   publish_image_dev:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/cd-aws'
+    if: github.ref == 'refs/heads/feat/cd-aws'
     steps:
       - uses: actions/checkout@v3
       - name: Set up Docker Buildx
@@ -104,7 +104,7 @@ jobs:
   deploy_dev:
     needs: publish_image_dev
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/cd-aws'
+    if: github.ref == 'refs/heads/feat/cd-aws'
     environment: staging
 
     steps:
@@ -134,7 +134,7 @@ jobs:
 
           sudo apt-get update
           sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-          
+
           cd ~
           if [ ! -d twitter ]; then
             git clone https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git twitter
